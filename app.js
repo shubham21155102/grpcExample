@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const protoObject = protoLoader.loadSync(path.resolve(__dirname, "./server/proto/RiskScore.proto"));
+const protoObject = protoLoader.loadSync(path.resolve(__dirname, "./proto/RiskScore.proto"));
 const RiskScoreDefinition = grpc.loadPackageDefinition(protoObject);
 const client = new RiskScoreDefinition.RiskScorePackage.RiskScore("0.0.0.0:50051", grpc.credentials.createInsecure());
 const app = express();

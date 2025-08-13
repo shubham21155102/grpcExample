@@ -1,9 +1,15 @@
+from risk_score_servicer import RiskScoreServicer
+import proto.RiskScore_pb2_grpc as handler
+import sys
+import os
 from concurrent import futures
 import logging
 import grpc
 
-import proto.RiskScore_pb2_grpc as handler
-from risk_score_servicer import RiskScoreServicer
+# Add project root to Python path
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO,
