@@ -9,11 +9,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const protoObject = protoLoader.loadSync(path.resolve(__dirname, "./server/proto/TaskList.proto"));
-// const RiskScoreDefinition = grpc.loadPackageDefinition(protoObject);
-const TaskListDefinition = grpc.loadPackageDefinition(protoObject);
-// const client = new RiskScoreDefinition.RiskScore.RiskScoreService("0.0.0.0:50051", grpc.credentials.createInsecure());
-const client = new TaskListDefinition.TaskListPackage.TaskList("0.0.0.0:50051", grpc.credentials.createInsecure());
+const protoObject = protoLoader.loadSync(path.resolve(__dirname, "./server/proto/RiskScore.proto"));
+const RiskScoreDefinition = grpc.loadPackageDefinition(protoObject);
+const client = new RiskScoreDefinition.RiskScorePackage.RiskScore("0.0.0.0:50051", grpc.credentials.createInsecure());
 const app = express();
 
 // Configure Express for proper UTF-8 handling
@@ -51,29 +49,6 @@ router.post("/riskScore", async (req, res) => {
 });
 
 app.use("/", router);
-app.post("/createTask", (req, res) => {
-    client.createTask({title: req.body["title"], description: req.body["description"]}, (err, response) => {
-        if (err)
-            return res.status(500).end();
-        return res.status(201).json(response);
-    });
-});
-
-app.get("/listTasks", (req, res) => {
-    client.listTasks({}, (err, response) => {
-        if (err)
-            return res.status(500).end();
-       return res.status(200).json(response);
-    });
-});
-
-app.put("/complete/:id", (req, res) => {
-   client.completeTask({ id: req.params["id"] }, (err) => {
-       if (!err)
-           return res.status(500).end();
-       return res.status(200).end();
-   });
-});
 app.listen(3000, () => {
   console.log("Express server running on port 3000");
 });

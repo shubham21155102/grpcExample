@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package RiskScorePackage;
+
+service RiskScore {
+    rpc CalculateRiskScore (RiskScoreRequest) returns (RiskScoreUpdate);
+}
+
+message Empty {}
+
+message RiskScoreRequest {
+    string manufacturer = 1;
+    string device = 2;
+}
+message RiskScoreUpdate {
+    string status = 1;
+    double progress = 2;
+    double risk_score = 3;
+    int32 record_count = 4;
+    string message = 5;
+    bool completed = 6;
+}

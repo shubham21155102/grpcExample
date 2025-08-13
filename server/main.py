@@ -2,12 +2,12 @@ from concurrent import futures
 
 import grpc
 
-import proto.TaskList_pb2_grpc as handler
-from task_list_servicer import TaskListServicer
+import proto.RiskScore_pb2_grpc as handler
+from risk_score_servicer import RiskScoreServicer
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    handler.add_TaskListServicer_to_server(TaskListServicer(), server)
+    handler.add_RiskScoreServicer_to_server(RiskScoreServicer(), server)
     server.add_insecure_port('[::]:50051')
     try:
         server.start()
