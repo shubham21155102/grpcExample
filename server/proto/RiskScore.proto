@@ -3,7 +3,8 @@ syntax = "proto3";
 package RiskScorePackage;
 
 service RiskScore {
-    rpc CalculateRiskScore (RiskScoreRequest) returns (RiskScoreUpdate);
+    // rpc CalculateRiskScore (RiskScoreRequest) returns (RiskScoreUpdate);
+    rpc CalculateRiskScore (RiskScoreRequest) returns (stream RiskScoreUpdate);
 }
 
 message Empty {}

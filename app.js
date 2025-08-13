@@ -48,6 +48,56 @@ router.post("/riskScore", async (req, res) => {
   });
 });
 
+
+// Streaming risk-score route
+router.get("/risk-score", async (req, res) => {
+  const { manufacturer_name, fda_name } = req.query;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Transfer-Encoding", "chunked");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+
+  // Function to safely encode and stream text
+  const streamText = async (text, delay = 50) => {
+    const sanitizedText = Buffer.from(text, 'utf8').toString('utf8');
+    for (const char of sanitizedText) {
+      res.write(char, 'utf8');
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+    res.write("\n", 'utf8');
+  };
+  await streamText(`Starting risk score calculation for device: ${fda_name} by manufacturer: ${manufacturer_name}`);
+  try {
+    const request = {
+      manufacturer: manufacturer_name,
+      device: fda_name 
+    };
+    const call = client.calculateRiskScore(request);
+
+    call.on('data', async (response) => {
+      const message = Buffer.from(response.message || '', 'utf8').toString('utf8');
+      await streamText(message);
+      if (response.completed) {
+        await streamText(`\nFinal Result: ${JSON.stringify(response, null, 2)}`);
+        res.end();
+      }
+    });
+
+    call.on('error', async (error) => {
+      await streamText(`Error: ${error.message}`);
+      res.end();
+    });
+
+    call.on('end', () => {
+      // Optionally handle end
+    });
+
+  } catch (error) {
+    await streamText(`Error: ${error.message}`);
+    res.end();
+  }
+});
+
 app.use("/", router);
 app.listen(3000, () => {
   console.log("Express server running on port 3000");
