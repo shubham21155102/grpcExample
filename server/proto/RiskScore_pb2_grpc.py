@@ -3,7 +3,7 @@
 import grpc
 import warnings
 
-import RiskScore_pb2 as RiskScore__pb2
+import proto.RiskScore_pb2 as RiskScore__pb2
 
 GRPC_GENERATED_VERSION = '1.74.0'
 GRPC_VERSION = grpc.__version__

@@ -35,38 +35,71 @@ router.post("/riskScore", async (req, res) => {
   const manufacturer_name = req.body.manufacturer_name
   const device_name = req.body.device_name
   console.log("Request received:", { manufacturer_name, device_name });
-  client.calculateRiskScore({
-    manufacturer: manufacturer_name,
-    device: device_name
-  },(err,response)=>{
-    if (err) {
-      console.error("Error calculating risk score:", err);
-      return res.status(500).json({ error: "Internal server error" });
-    }
-    console.log("Risk score calculated successfully");
-    return res.status(200).json(response);
-  });
+  
+  try {
+    client.calculateRiskScore({
+      manufacturer: manufacturer_name,
+      device: device_name
+    }, (err, response) => {
+      if (err) {
+        console.error("Error calculating risk score:", err);
+        return res.status(500).json({ error: "Internal server error" });
+      }
+      console.log("Risk score calculated successfully");
+      return res.status(200).json(response);
+    });
+  } catch (error) {
+    console.error("Unexpected error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 
 // Streaming risk-score route
 router.get("/risk-score", async (req, res) => {
   const { manufacturer_name, fda_name } = req.query;
+  
+  // Set headers for streaming
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.setHeader("Transfer-Encoding", "chunked");
   res.setHeader("Cache-Control", "no-cache, no-transform");
   res.setHeader("Connection", "keep-alive");
 
-  // Function to safely encode and stream text
-  const streamText = async (text, delay = 50) => {
-    const sanitizedText = Buffer.from(text, 'utf8').toString('utf8');
-    for (const char of sanitizedText) {
-      res.write(char, 'utf8');
-      await new Promise((resolve) => setTimeout(resolve, delay));
-    }
-    res.write("\n", 'utf8');
+  // Use a mutex-like approach to prevent concurrent writes
+  let isWriting = false;
+  const writeQueue = [];
+
+  const safeWrite = async (text) => {
+    return new Promise((resolve) => {
+      writeQueue.push({ text, resolve });
+      processQueue();
+    });
   };
-  await streamText(`Starting risk score calculation for device: ${fda_name} by manufacturer: ${manufacturer_name}`);
+
+  const processQueue = async () => {
+    if (isWriting || writeQueue.length === 0) return;
+    
+    isWriting = true;
+    const { text, resolve } = writeQueue.shift();
+    
+    try {
+      const sanitizedText = Buffer.from(text, 'utf8').toString('utf8');
+      res.write(sanitizedText + "\n", 'utf8');
+      await new Promise(r => setTimeout(r, 50)); // Small delay to prevent race conditions
+      resolve();
+    } catch (error) {
+      console.error('Write error:', error);
+      resolve();
+    } finally {
+      isWriting = false;
+      if (writeQueue.length > 0) {
+        setImmediate(processQueue);
+      }
+    }
+  };
+
+  await safeWrite(`Starting risk score calculation for device: ${fda_name} by manufacturer: ${manufacturer_name}`);
+  
   try {
     const request = {
       manufacturer: manufacturer_name,
@@ -75,25 +108,33 @@ router.get("/risk-score", async (req, res) => {
     const call = client.calculateRiskScore(request);
 
     call.on('data', async (response) => {
-      const message = Buffer.from(response.message || '', 'utf8').toString('utf8');
-      await streamText(message);
+      const message = response.message || '';
+      // await safeWrite(message);
+     
+      
       if (response.completed) {
-        await streamText(`\nFinal Result: ${JSON.stringify(response, null, 2)}`);
+        await safeWrite(`\nFinal Result: ${JSON.stringify(response, null, 2)}`);
         res.end();
+      }
+      else {
+        await safeWrite(`\nResponse: ${JSON.stringify(response, null, 2)}`);
       }
     });
 
     call.on('error', async (error) => {
-      await streamText(`Error: ${error.message}`);
+      await safeWrite(`Error: ${error.message}`);
       res.end();
     });
 
     call.on('end', () => {
-      // Optionally handle end
+      // Handle stream end gracefully
+      if (!res.headersSent) {
+        res.end();
+      }
     });
 
   } catch (error) {
-    await streamText(`Error: ${error.message}`);
+    await safeWrite(`Error: ${error.message}`);
     res.end();
   }
 });
