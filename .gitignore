@@ -1,3 +1,6 @@
 venv/
 data.db
 node_modules/
+shubham
+.venv
+__pycache__

@@ -2,9 +2,8 @@ from concurrent import futures
 
 import grpc
 
-import server.proto.TaskList_pb2_grpc as handler
-from server.task_list_servicer import TaskListServicer
-
+import proto.TaskList_pb2_grpc as handler
+from task_list_servicer import TaskListServicer
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))

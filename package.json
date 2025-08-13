@@ -1,0 +1,29 @@
+{
+  "name": "grpcexample",
+  "version": "1.0.0",
+  "description": "This is a example showing how you can create a service using gRPC.",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shubham21155102/grpcExample.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/shubham21155102/grpcExample/issues"
+  },
+  "homepage": "https://github.com/shubham21155102/grpcExample#readme",
+  "dependencies": {
+    "@grpc/grpc-js": "^1.13.4",
+    "@grpc/proto-loader": "^0.8.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "path": "^0.12.7",
+    "url": "^0.11.4"
+  }
+}
